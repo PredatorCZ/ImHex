@@ -31,6 +31,10 @@ namespace hex::pl {
             return this->m_onlyIncludeOnce;
         }
 
+        void setFilePath(fs::path path) {
+            m_filePath = path;
+        }
+
     private:
         [[noreturn]] static void throwPreprocessorError(const std::string &error, u32 lineNumber) {
             throw PatternLanguageError(lineNumber, "Preprocessor: " + error);
@@ -44,6 +48,8 @@ namespace hex::pl {
         std::set<fs::path> m_onceIncludedFiles;
 
         std::optional<PatternLanguageError> m_error;
+
+        std::optional<fs::path> m_filePath;
 
         bool m_onlyIncludeOnce = false;
     };

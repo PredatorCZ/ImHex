@@ -130,6 +130,7 @@ namespace hex::plugin::builtin {
                     if (!file.isValid())
                         continue;
 
+                    preprocessor.setFilePath(entry);
                     preprocessor.preprocess(file.readString());
 
                     if (foundCorrectType)

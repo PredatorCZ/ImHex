@@ -47,6 +47,8 @@ namespace hex::pl {
                         char endChar = code[offset];
                         if (endChar == '<') endChar = '>';
 
+                        bool systemInclude = endChar == '>';
+
                         offset += 1;
 
                         std::string includeFile;
@@ -61,15 +63,35 @@ namespace hex::pl {
 
                         fs::path includePath = includeFile;
 
-                        if (includeFile[0] != '/') {
+                        auto getRelativeInclude = [&] {
+                            fs::path tempPath = m_filePath.value().parent_path() / includePath;
+                            if (fs::exists(tempPath)) {
+                                includePath = tempPath;
+                                return true;
+                            }
+
+                            return false;
+                        };
+
+                        if (includeFile[0] != '/') [&] {
+                            if (!systemInclude && m_filePath) {
+                                if (getRelativeInclude()) {
+                                    return;
+                                }
+                            }
+
                             for (const auto &dir : hex::getPath(ImHexPath::PatternsInclude)) {
                                 fs::path tempPath = dir / includePath;
                                 if (fs::exists(tempPath)) {
                                     includePath = tempPath;
-                                    break;
+                                    return;
                                 }
                             }
-                        }
+
+                            if (systemInclude && m_filePath) {
+                                getRelativeInclude();
+                            }
+                        }();
 
                         File file(includePath, File::Mode::Read);
                         if (!file.isValid()) {
@@ -83,6 +105,7 @@ namespace hex::pl {
                         preprocessor.addDefaultPragmaHandlers();
                         preprocessor.m_defines           = this->m_defines;
                         preprocessor.m_onceIncludedFiles = this->m_onceIncludedFiles;
+                        preprocessor.setFilePath(includePath);
 
                         auto preprocessedInclude = preprocessor.preprocess(file.readString(), true);
 
